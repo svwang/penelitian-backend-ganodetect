@@ -1,10 +1,14 @@
 # main.py
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Depends
+from sqlalchemy.orm import Session
 from .inference import predict
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from fastapi.staticfiles import StaticFiles
 import os
+
+from .connectionDb import get_db
+from .models import Inference
 
 
 logging.basicConfig(
@@ -31,10 +35,34 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# @app.post("/predict")
+# async def predict_image(file: UploadFile = File(...)):
+#     image_bytes = await file.read()
+#     result = predict(image_bytes)
+
+#     print("DEBUG raw result:", result)
+#     return result
+
+
 @app.post("/predict")
-async def predict_image(file: UploadFile = File(...)):
+async def predict_image(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+
     image_bytes = await file.read()
     result = predict(image_bytes)
 
-    print("DEBUG raw result:", result)
+    new_inference = Inference(
+        user_id=1,
+        label=result["label"],
+        confidence=result["confidence"],
+        inference_time=result["inference_time"],
+        gradcam_image=result["gradcam_image"]
+    )
+
+    db.add(new_inference)
+    db.commit()
+    db.refresh(new_inference)
+
     return result
