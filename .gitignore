@@ -1,4 +1,4 @@
-app/_pycache_/
+**/_pycache_/
 model/
 venv/
 Dockerfile
