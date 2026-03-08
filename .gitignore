@@ -1,0 +1,5 @@
+app/_pycache_/
+model/
+venv/
+Dockerfile
+.dockerignore
